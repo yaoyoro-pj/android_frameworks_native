@@ -81,7 +81,6 @@
 #include "TunnelModeEnabledReporter.h"
 
 #define DEBUG_RESIZE 0
-#define EARLY_RELEASE_ENABLED false
 
 namespace android {
 namespace {
@@ -3100,7 +3099,7 @@ bool Layer::setBuffer(std::shared_ptr<renderengine::ExternalTexture>& buffer,
                 addSurfaceFrameDroppedForBuffer(mDrawingState.bufferSurfaceFrameTX, systemTime());
                 mDrawingState.bufferSurfaceFrameTX.reset();
             }
-        } else if (EARLY_RELEASE_ENABLED && mLastClientCompositionFence != nullptr) {
+        } else if (mLastClientCompositionFence != nullptr) {
             callReleaseBufferCallback(mDrawingState.releaseBufferListener,
                                       mDrawingState.buffer->getBuffer(), mDrawingState.frameNumber,
                                       mLastClientCompositionFence);
