@@ -2811,7 +2811,6 @@ void SurfaceFlinger::postComposition(PhysicalDisplayId pacesetterId,
                                      const scheduler::FrameTargeters& frameTargeters,
                                      nsecs_t presentStartTime) {
     ATRACE_CALL();
-    ALOGV(__func__);
 
     ui::PhysicalDisplayMap<PhysicalDisplayId, std::shared_ptr<FenceTime>> presentFences;
     ui::PhysicalDisplayMap<PhysicalDisplayId, const sp<Fence>> gpuCompositionDoneFences;
@@ -3717,7 +3716,6 @@ void SurfaceFlinger::commitTransactionsLocked(uint32_t transactionFlags) {
                 // first frame before the display is available, we rely
                 // on WMS and DMS to provide the right information
                 // so the client can calculate the hint.
-                ALOGV("Skipping reporting transform hint update for %s", layer->getDebugName());
                 layer->skipReportingTransformHint();
             } else {
                 layer->updateTransformHint(hintDisplay->getTransformHint());
