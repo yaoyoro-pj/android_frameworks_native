@@ -672,6 +672,9 @@ void OutputLayer::uncacheBuffers(const std::vector<uint64_t>& bufferIdsToUncache
 void OutputLayer::writeBufferStateToHWC(HWC2::Layer* hwcLayer,
                                         const LayerFECompositionState& outputIndependentState,
                                         bool skipLayer) {
+    if (skipLayer && outputIndependentState.buffer == nullptr) {
+        return;
+    }
     auto supportedPerFrameMetadata =
             getOutput().getDisplayColorProfile()->getSupportedPerFrameMetadata();
     if (auto error = hwcLayer->setPerFrameMetadata(supportedPerFrameMetadata,
