@@ -1237,7 +1237,8 @@ void Output::updateProtectedContentState() {
     if (outputState.isSecure && supportsProtectedContent) {
         auto layers = getOutputLayersOrderedByZ();
         bool needsProtected = std::any_of(layers.begin(), layers.end(), [](auto* layer) {
-            return layer->getLayerFE().getCompositionState()->hasProtectedContent;
+            return layer->getLayerFE().getCompositionState()->hasProtectedContent
+                    && layer->requiresClientComposition();
         });
         if (needsProtected != mRenderSurface->isProtected()) {
             mRenderSurface->setProtected(needsProtected);
