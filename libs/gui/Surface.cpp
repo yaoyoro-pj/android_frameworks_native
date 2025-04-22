@@ -24,9 +24,11 @@
 #include <deque>
 #include <mutex>
 #include <thread>
+#ifdef ENABLE_MTK_GED_KPI
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#endif
 
 #include <inttypes.h>
 
@@ -52,9 +54,10 @@
 #include <gui/LayerState.h>
 #include <private/gui/ComposerService.h>
 #include <private/gui/ComposerServiceAIDL.h>
+#ifdef ENABLE_MTK_GED_KPI
 #include <android-base/properties.h>
-
 #include <binder/IPCThreadState.h>
+#endif
 
 namespace android {
 
@@ -78,7 +81,8 @@ bool isInterceptorRegistrationOp(int op) {
 }
 
 } // namespace
-  //
+
+#ifdef ENABLE_MTK_GED_KPI
 #define GED_MAGIC 'g'
 #define GED_BRIDGE_COMMAND_GPU_TIMESTAMP      103
 #define GED_IOWR(INDEX)  _IOWR(GED_MAGIC, INDEX, GED_BRIDGE_PACKAGE)
@@ -107,8 +111,8 @@ struct GED_BRIDGE_OUT_GPU_TIMESTAMP {
     int is_ged_kpi_enabled;
 };
 
-static int doMtkGedKpi = -1;
 static int ged_fd = -1;
+#endif
 
 Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controlledByApp,
                  const sp<IBinder>& surfaceControlHandle)
@@ -162,11 +166,8 @@ Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controll
     mMaxBufferCount = NUM_BUFFER_SLOTS;
     mSurfaceControlHandle = surfaceControlHandle;
 
-    if (doMtkGedKpi == -1) {
-        doMtkGedKpi = android::base::GetIntProperty("persist.sys.phh.mtk_ged_kpi", 0);
-    }
-
-    if (ged_fd == -1 && doMtkGedKpi == 1) {
+#ifdef ENABLE_MTK_GED_KPI
+    if (ged_fd == -1) {
         ALOGE("Opening ged");
         ged_fd = open("/proc/ged", O_RDONLY);
         ALOGE("Opening ged ret = %d", ged_fd);
@@ -195,13 +196,13 @@ Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controll
             ALOGE("First null timestamp ioctl returned %d %d %d", ret, out.eError, out.is_ged_kpi_enabled);
             if (out.is_ged_kpi_enabled != 1) {
                 ALOGE("is_ged_kpi_enabled reported disabled");
-                doMtkGedKpi = 0;
             }
         } else {
             ALOGE("No /proc/ged");
         }
         }
     }
+#endif
 }
 
 Surface::~Surface() {
@@ -721,6 +722,7 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
         }
     }
 
+#ifdef ENABLE_MTK_GED_KPI
     if (mGraphicBufferProducer != nullptr && ged_fd >= 0) {
         uint64_t uniqueId;
         mGraphicBufferProducer->getUniqueId(&uniqueId);
@@ -751,6 +753,7 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
 
         close(dupFenceFd);
     }
+#endif
     if (fence->isValid()) {
         *fenceFd = fence->dup();
         if (*fenceFd == -1) {
@@ -1194,6 +1197,7 @@ void Surface::onBufferQueuedLocked(int slot, sp<Fence> fence,
     }
 
     mQueueBufferCondition.broadcast();
+#ifdef ENABLE_MTK_GED_KPI
     if (mGraphicBufferProducer != nullptr && ged_fd >= 0) {
         sp<GraphicBuffer>& gbuf(mSlots[slot].buffer);
         uint64_t uniqueId;
@@ -1248,7 +1252,7 @@ void Surface::onBufferQueuedLocked(int slot, sp<Fence> fence,
         }
         close(dupFenceFd);
     }
-
+#endif
     if (CC_UNLIKELY(atrace_is_tag_enabled(ATRACE_TAG_GRAPHICS))) {
         static gui::FenceMonitor gpuCompletionThread("GPU completion");
         gpuCompletionThread.queueFence(fence);
@@ -2018,6 +2022,7 @@ int Surface::connect(
 
     // For MTK GED KPI, we need to grab the Surface owner's PID
     // and also know whether that owner is surfaceflinger
+#ifdef ENABLE_MTK_GED_KPI
     if (api == NATIVE_WINDOW_API_EGL && ged_fd >= 0) {
         IPCThreadState *ipc = IPCThreadState::selfOrNull();
         const sp<IBinder>& token = listener->asBinder(listener);
@@ -2054,6 +2059,7 @@ int Surface::connect(
             mIsSurfaceFlinger = false;
         }
     }
+#endif
 
     if (!err && api == NATIVE_WINDOW_API_CPU) {
         mConnectedToCpu = true;
