@@ -237,9 +237,6 @@ phony {
         "inputflinger",
         "libinputflingerhost",
 
-        // rust targets
-        "libinput_rust_test",
-
         // native fuzzers
         "inputflinger_latencytracker_fuzzer",
         "inputflinger_cursor_input_fuzzer",

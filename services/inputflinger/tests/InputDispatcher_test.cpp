@@ -8950,8 +8950,6 @@ TEST_F(InputDispatcherDropInputFeatureTest, WindowDropsInput) {
 
     mDispatcher->notifyMotion(generateMotionArgs(AMOTION_EVENT_ACTION_DOWN,
                                                  AINPUT_SOURCE_TOUCHSCREEN, ADISPLAY_ID_DEFAULT));
-    mDispatcher->notifyMotion(generateMotionArgs(AMOTION_EVENT_ACTION_UP, AINPUT_SOURCE_TOUCHSCREEN,
-                                                 ADISPLAY_ID_DEFAULT));
     window->assertNoEvents();
 
     // With the flag cleared, the window should get input
@@ -8993,8 +8991,6 @@ TEST_F(InputDispatcherDropInputFeatureTest, ObscuredWindowDropsInput) {
 
     mDispatcher->notifyMotion(generateMotionArgs(AMOTION_EVENT_ACTION_DOWN,
                                                  AINPUT_SOURCE_TOUCHSCREEN, ADISPLAY_ID_DEFAULT));
-    mDispatcher->notifyMotion(generateMotionArgs(AMOTION_EVENT_ACTION_UP, AINPUT_SOURCE_TOUCHSCREEN,
-                                                 ADISPLAY_ID_DEFAULT));
     window->assertNoEvents();
 
     // With the flag cleared, the window should get input
@@ -9036,8 +9032,6 @@ TEST_F(InputDispatcherDropInputFeatureTest, UnobscuredWindowGetsInput) {
 
     mDispatcher->notifyMotion(generateMotionArgs(AMOTION_EVENT_ACTION_DOWN,
                                                  AINPUT_SOURCE_TOUCHSCREEN, ADISPLAY_ID_DEFAULT));
-    mDispatcher->notifyMotion(generateMotionArgs(AMOTION_EVENT_ACTION_UP, AINPUT_SOURCE_TOUCHSCREEN,
-                                                 ADISPLAY_ID_DEFAULT));
     window->assertNoEvents();
 
     // When the window is no longer obscured because it went on top, it should get input

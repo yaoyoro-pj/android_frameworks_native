@@ -112,10 +112,6 @@ public:
             mRawYCursorPosition = pointerCoords[0].getY();
         }
 
-        if (mAction == AMOTION_EVENT_ACTION_CANCEL) {
-            addFlag(AMOTION_EVENT_FLAG_CANCELED);
-        }
-
         return {InputEvent::nextId(),
                 mEventTime,
                 /*readTime=*/mEventTime,

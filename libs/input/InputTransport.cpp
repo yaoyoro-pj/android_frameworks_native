@@ -14,7 +14,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <binder/Parcel.h>
@@ -82,7 +81,6 @@ const bool DEBUG_RESAMPLING =
 
 } // namespace
 
-using android::base::Result;
 using android::base::StringPrintf;
 
 namespace android {
@@ -623,12 +621,8 @@ status_t InputPublisher::publishMotionEvent(
         ATRACE_NAME(message.c_str());
     }
     if (verifyEvents()) {
-        Result<void> result =
-                mInputVerifier.processMovement(deviceId, action, pointerCount, pointerProperties,
-                                               pointerCoords, flags);
-        if (!result.ok()) {
-            LOG(FATAL) << "Bad stream: " << result.error();
-        }
+        mInputVerifier.processMovement(deviceId, action, pointerCount, pointerProperties,
+                                       pointerCoords, flags);
     }
     if (debugTransportPublisher()) {
         std::string transformString;
