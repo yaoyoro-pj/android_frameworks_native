@@ -282,8 +282,23 @@ Status ServiceManager::checkService(const std::string& name, sp<IBinder>* outBin
     return Status::ok();
 }
 
+static bool isRomService(const std::string& name) {
+    return name.compare(0, 7, "lineage") == 0
+        || name.compare(0, 15, "vendor.lineage.") == 0
+        || name == "profile";
+}
+
+static bool isUntrustedCaller(const Access::CallingContext& ctx) {
+    if (ctx.uid < AID_APP_START) return false;
+    return ctx.sid.find("untrusted_app") != std::string::npos;
+}
+
 sp<IBinder> ServiceManager::tryGetService(const std::string& name, bool startIfNotFound) {
     auto ctx = mAccess->getCallingContext();
+
+    if (isRomService(name) && isUntrustedCaller(ctx)) {
+        return nullptr;
+    }
 
     sp<IBinder> out;
     Service* service = nullptr;
@@ -434,11 +449,15 @@ Status ServiceManager::listServices(int32_t dumpPriority, std::vector<std::strin
 
     CHECK(outList->empty());
 
+    auto callerCtx = mAccess->getCallingContext();
+    bool shouldFilter = isUntrustedCaller(callerCtx);
+
     outList->reserve(toReserve);
     for (auto const& [name, service] : mNameToService) {
         (void) service;
 
         if (service.dumpPriority & dumpPriority) {
+            if (shouldFilter && isRomService(name)) continue;
             outList->push_back(name);
         }
     }
@@ -518,6 +537,11 @@ Status ServiceManager::unregisterForNotifications(
 Status ServiceManager::isDeclared(const std::string& name, bool* outReturn) {
     auto ctx = mAccess->getCallingContext();
 
+    if (isRomService(name) && isUntrustedCaller(ctx)) {
+        *outReturn = false;
+        return Status::ok();
+    }
+
     if (!mAccess->canFind(ctx, name)) {
         return Status::fromExceptionCode(Status::EX_SECURITY, "SELinux denied.");
     }
@@ -532,6 +556,11 @@ Status ServiceManager::isDeclared(const std::string& name, bool* outReturn) {
 
 binder::Status ServiceManager::getDeclaredInstances(const std::string& interface, std::vector<std::string>* outReturn) {
     auto ctx = mAccess->getCallingContext();
+
+    if (isRomService(interface) && isUntrustedCaller(ctx)) {
+        outReturn->clear();
+        return Status::ok();
+    }
 
     std::vector<std::string> allInstances;
 #ifndef VENDORSERVICEMANAGER
@@ -881,8 +910,13 @@ Status ServiceManager::getServiceDebugInfo(std::vector<ServiceDebugInfo>* outRet
         return Status::fromExceptionCode(Status::EX_SECURITY, "SELinux denied.");
     }
 
+    auto callerCtx = mAccess->getCallingContext();
+    bool shouldFilter = isUntrustedCaller(callerCtx);
+
     outReturn->reserve(mNameToService.size());
     for (auto const& [name, service] : mNameToService) {
+        if (shouldFilter && isRomService(name)) continue;
+
         ServiceDebugInfo info;
         info.name = name;
         info.debugPid = service.ctx.debugPid;
