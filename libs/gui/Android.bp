@@ -276,10 +276,7 @@ cc_defaults {
 
     cflags: [
         "-Wthread-safety",
-    ] + select(soong_config_variable("surfaceflinger", "has_mtk_ged"), {
-        true: ["-DENABLE_MTK_GED_KPI"],
-        default: [],
-    }),
+    ],
 }
 
 // Used by media codec services exclusively as a static lib for
